@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content id="carrier_based_training" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" version="001" date="2020-05-02" save="0">
+	<text language="7" name="Carrier Based Training" description="None" author="mrjonesandme" />
+	<text language="33" name="Carrier Based Training" description="None" author="mrjonesandme" />
+	<text language="34" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+	<text language="39" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training" author="mrjonesandme" />
+	<text language="44" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+	<text language="49" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+	<text language="55" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+	<text language="81" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+	<text language="82" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+	<text language="86" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+	<text language="88" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />
+</content>

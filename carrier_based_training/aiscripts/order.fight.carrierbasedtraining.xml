@@ -1,0 +1,86 @@
+<aiscript name="carrierbasedtraining" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+    <!-- Setup context menu order-->
+    <order id="CarrierBasedTraining" name="Train Subordinates" description="Train pilots and crews up to basic combat ready status" category="combat" infinite="true">
+        <params>
+            <!-- What sector should the training platform perform training operations in -->
+            <param name="PatrolSector" default="null" type="object" text="Training Area" required="true" comment="What sector should training be performed in?">
+                <input_param name="class" value="[class.sector]"/>
+            </param>
+            <!-- Where should the pilot report to upon completing basic training -->
+            <param name="DutyStation" default="this.sector" type="object" text="Assignment Upon Completion" required="true" comment="L/XL/Station graduated pilots should report to upon completion of training">
+                <input_param name="class" value="[class.station,class.ship_xl,class.ship_l]"/>
+                <input_param name="owner" value="this.object.owner"/>
+            </param>
+            <!-- Max skill is limited to the max skill of the commander in the training ship -->
+            <param name="PilotStars" default="@this.ship.pilot.skill.piloting / 3" type="number" text="Desired Pilot Rank" comment="Max skill level is this ship's pilot skill">
+                <!-- This is presented as "stars" to the player and will be multiplied by 3 in the script code to represent actuall skill level-->
+                <input_param name="startvalue" value="3"/>
+                <input_param name="min" value="1"/>
+                <input_param name="max" value="@this.ship.pilot.skill.piloting / 3"/>
+                <input_param name="step" value="1"/>
+            </param>
+            <!-- TODO: balance pro training cost-->
+            <param name="ProTraining" type="bool" default="false" text="Professional training (6-30kCr/hr/pilot)" comment="Pay 150k credits per pilot to accelerate training and reduce odds of bad things"/>
+            <param name="ProgressReports" type="bool" default="false" text="Enable progress reports" comment="Enable notifications for pilot training?"/>
+        </params>
+        <!-- Make sure commander has at least some talent for this order to be eligible.   -->
+        <skill min="20"/>
+        <requires>
+            <!-- L miners, freighters, destroyers, and carriers only -->
+            <match_any>
+                <match shiptype="shiptype.largeminer"/>
+                <match shiptype="shiptype.freighter"/>
+                <match shiptype="shiptype.destroyer"/>
+                <match shiptype="shiptype.carrier"/>
+            </match_any>
+        </requires>
+    </order>
+    <interrupts>
+        <handler ref="SectorChangeHandler"/>
+        <handler ref="ScannedHandler"/>
+        <handler ref="AttackHandler" />
+        <handler ref="MissileLockHandler" />
+        <handler ref="InspectedHandler"/>
+        <handler ref="TargetInvalidHandler"/>
+        <handler ref="ResupplyHandler"/>
+    </interrupts>
+    <init>
+        <set_value name="$started" exact="player.age"/>
+        <set_value name="$PilotThreshold" exact="$PilotStars * 3"/>
+        <!-- Initialize global training cmdr group in case it doesn't exist yet-->
+        <do_if value="(not global.$CBT_CmderGroup?)">
+            <create_group groupname="global.$CBT_CmderGroup"/>
+        </do_if>
+        <set_order_syncpoint_reached order="this.ship.order"/>
+    </init>
+    <attention min="unknown">
+        <actions>
+            <label name="start"/>
+            <debug_text text="'CARRIER BASED TRAINING (AI) - COMMANDER - INIT - Saving training paramaters to blackboard and adding cmdr to group for %1 (%2) in %3.  '.[this.ship.knownname, this.ship.idcode, this.object.sector.knownname]"/>
+            <add_to_group groupname="global.$CBT_CmderGroup" object="this.ship.pilot"/>
+            <set_value name="this.ship.pilot.$Carrier" exact="this.ship"/>
+            <set_value name="this.ship.pilot.$DutyStation" exact="$DutyStation"/>
+            <set_value name="this.ship.pilot.$ProTraining" exact="$ProTraining"/>
+            <set_value name="this.ship.pilot.$PilotThreshold" exact="$PilotThreshold"/>
+            <set_value name="this.ship.pilot.$TrainingStart" exact="player.age"/>
+            <set_value name="this.ship.pilot.$PilotsTrained" exact="0"/>
+            <set_value name="this.ship.pilot.$TotalTrainingCost" exact="0"/>
+            <set_value name="this.ship.pilot.$ProgressReports" exact="$ProgressReports"/>
+            <debug_text text="'CARRIER BASED TRAINING (AI) - CARRIER -  %1 (%2) in %3 is patroling sector %4'.[this.ship.knownname, this.ship.idcode, this.object.sector.knownname, $PatrolSector.knownname]"/>
+            <do_if value="$ProgressReports == 1">
+                <set_value name="$body" exact="'Commander %1 will begin training pilots assigned to %2 (%3) in %4.  Pilots will be trained up to rank %5 in piloting before reassignment to %6.  The commander will provide periodic training reports into the tips logbook category'.[this.ship.pilot.knownname, this.ship.knownname, this.ship.idcode, this.ship.sector.knownname, $PilotStars, $DutyStation.knownname]"/>
+                <write_to_logbook category="upkeep" title="'\033G' + 'TrainingOps - Training Carrier Activated'" text="$body"/>
+                <show_notification text="'\033G' + 'TrainingOps - Training Carrier Activated'" timeout="10s"/>
+            </do_if>
+            <do_else>
+                <set_value name="$body" exact="'Commander %1 will begin training pilots assigned to %2 (%3) in %4.  Pilots will be trained up to rank %5 in piloting before reassignment to %6.  This commander has not been instructed to provide training reports'.[this.ship.pilot.knownname, this.ship.knownname, this.ship.idcode, this.ship.sector.knownname, $PilotStars, $DutyStation.knownname]"/>
+                <write_to_logbook category="upkeep" title="'\033G' + 'TrainingOps - Training Carrier Activated'" text="$body"/>
+            </do_else>
+            <!-- Patrol sector, do not engage unless fired upon -->
+            <create_order object="this.ship" id="'Patrol'">
+                <param name="space" value="$PatrolSector"/>
+                <param name="allowothertargets" value="false"/>
+            </create_order>
+        </actions>
+    </attention>
+</aiscript>

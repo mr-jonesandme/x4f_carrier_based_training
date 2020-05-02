@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<diff>
+	<add sel="//experiences/experience[@id='ship_kill_hard']" pos="before">
+		<experience id="basic_training_trainee">
+			<skill ref="piloting">
+				<individual base="1.0" falloff="0.40" limit="15"/>
+			</skill>
+			<skill ref="engineering">
+				<individual base="1.0" falloff="0.20" limit="9"/>
+				<group base="1.0" falloff="0.30" limit="15"/>
+			</skill>
+			<skill ref="morale">
+				<individual base="1.0" falloff="0.45" limit="15"/>
+				<group base="1.0" falloff="0.45" limit="15"/>
+			</skill>
+		</experience>
+		<experience id="pro_training_trainee">
+			<skill ref="piloting">
+				<individual base="1.0" falloff="0.80" limit="15"/>
+			</skill>
+			<skill ref="engineering">
+				<individual base="1.0" falloff="0.40" limit="9"/>
+				<group base="1.0" falloff="0.90" limit="15"/>
+			</skill>
+			<skill ref="morale">
+				<individual base="1.0" falloff="0.90" limit="15"/>
+				<group base="1.0" falloff="0.90" limit="15"/>
+			</skill>
+		</experience>
+		<experience id="trained_pilot">
+			<skill ref="piloting">
+				<individual base="1.0" falloff="0.20" limit="15"/>
+			</skill>
+			<skill ref="management">
+				<individual base="1.0" falloff="0.43" limit="15"/>
+			</skill>
+			<skill ref="engineering">
+				<group base="1.0" falloff="0.20" limit="15"/>
+			</skill>
+			<skill ref="morale">
+				<individual base="1.0" falloff="0.83" limit="15"/>
+				<group base="1.0" falloff="0.43" limit="15"/>
+			</skill>
+		</experience>
+	</add>
+</diff>

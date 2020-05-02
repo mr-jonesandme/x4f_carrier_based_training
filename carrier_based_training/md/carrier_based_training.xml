@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mdscript name="Carrier_based_training" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+	<!-- This script handles state and experience events for trainees and commanders -->
+	<!-- Commander Blackboard Vars: $Carrier (ship), $DutyStation(ship/station), $ProTraining(1/0), $PilotThreshold(3*stars), $TrainingStarted(player.age), $PilotsTrained(0), $TotalTrainingCost(0), $ProgressReports(1/0) -->
+	<!-- Global Groups: global.$CBT_CmderGroup (entity)-->
+	<cues>
+		<cue name="Apply_Experience" checkinterval="15min" instantiate="true">
+			<conditions>
+				<check_value value="global.$CBT_CmderGroup?"/>
+				<check_value value="global.$CBT_CmderGroup.count ge 1"/>
+			</conditions>
+			<actions>
+				<do_for_each name="$Commander" in="global.$CBT_CmderGroup">
+					<!-- Commander is no longer in charge of training carrier-->
+					<do_if value="$Commander.controlled != $Commander.$Carrier">
+						<!-- TODO: Generate a logbook entry to the player with the final reporting info for this commander along with a snipped of its removal from the business of training pilots. -->
+						<debug_text text="'CARRIER BASED TRAINING (MD) - COMMANDER - Invalid!  Commander %1 was assigned to carrier %2 but is now assigned to %3'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.controlled.knownname]"/>
+						<set_value name="$CommanderUpkeep" value="$Commander.$TotalTrainingCost + (0)Cr"/>
+						<set_value name="$body" exact="'Commander %1 is no longer actively training pilots on training ship %2.  Prior to this commanders retirement, the commander trained %3 ships and ran a total training cost of %4'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$PilotsTrained, $CommanderUpkeep.formatted.{'%.s %Cr'}]"/>
+						<show_notification text="'\033R' + 'TrainingOps - Commander Retired'" timeout="10s"/>
+						<write_to_logbook category="upkeep" title="'\033R' + 'TrainingOps - Commander Retired'" text="$body"/>
+						<remove_value name="$Commander.$Carrier"/>
+						<remove_value name="$Commander.$DutyStation"/>
+						<remove_value name="$Commander.$ProTraining"/>
+						<remove_value name="$Commander.$PilotThreshold"/>
+						<remove_value name="$Commander.$TrainingStarted"/>
+						<remove_value name="$Commander.$PilotsTrained"/>
+						<remove_value name="$Commander.$TotalTrainingCost"/>
+						<remove_value name="$Commander.$ProgressReports"/>
+						<remove_from_group group="global.$CBT_CmderGroup" object="$Commander"/>
+					</do_if>
+					<!-- Training carrier is no longer running the CarrierBasedTraining order.  Split out for debugging-combine these in the final version and create a "reason" var -->
+					<do_elseif value="$Commander.$Carrier.defaultorder.id != 'CarrierBasedTraining'">
+						<debug_text text="'CARRIER BASED TRAINING (MD) - COMMANDER - Invalid!  Carrier %1 is no longer assigned to train pilots.  Current order: %2'.[$Commander.$Carrier.knownname, $Commander.$Carrier.order.name]"/>
+						<set_value name="$CommanderUpkeep" value="$Commander.$TotalTrainingCost + (0)Cr"/>
+						<set_value name="$body" exact="'Training carrier %2 has been decommissioned from actively training pilots.  Prior to the retirement of Commander %1, the commander trained %3 ships and ran a total training cost of %4'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$PilotsTrained, $CommanderUpkeep.formatted.{'%.s %Cr'}]"/>
+						<write_to_logbook category="upkeep" title="'\033R' + 'TrainingOps - Carrier Decomissioned'" text="$body"/>
+						<show_notification text="'\033R' + 'TrainingOps - Carrier Decomissioned'" timeout="10s"/>
+						<remove_value name="$Commander.$Carrier"/>
+						<remove_value name="$Commander.$DutyStation"/>
+						<remove_value name="$Commander.$ProTraining"/>
+						<remove_value name="$Commander.$PilotThreshold"/>
+						<remove_value name="$Commander.$TrainingStarted"/>
+						<remove_value name="$Commander.$PilotsTrained"/>
+						<remove_value name="$Commander.$TotalTrainingCost"/>
+						<remove_value name="$Commander.$ProgressReports"/>
+						<remove_from_group group="global.$CBT_CmderGroup" object="$Commander"/>
+					</do_elseif>
+					<!-- This is a paid commander, calc cost and apply better XP -->
+					<do_elseif value="$Commander.$ProTraining == 1 and $Commander.controlled.subordinates.count ge 1">
+						<!--  base * threshold. -->
+						<!-- 5 stars = 30,000Cr/hr  -->
+						<!-- 4 stars = 24,000Cr/hr  -->
+						<!-- 3 stars = 18,000Cr/hr  -->
+						<!-- 2 stars = 12,000Cr/hr  -->
+						<!-- 1 stars = 6,000Cr/hr  -->
+						<do_if value="not($Commander.$DutyStation.isoperational)">
+							<!-- Duty station is no longer operational, inform the player - we have no place to send graduates to, but before we start looping through every pilot so as to not spam the log book-->
+							<set_value name="$body" exact="'The designated duty station %1 for pilots assigned to train with %2 (%3) is no longer available.  Pilots will continue to train but will not be reassigned to a new commander until one is designated'.[$Commander.$DutyStation.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode]"/>
+							<write_to_logbook category="upkeep" title="'\033R' + 'TrainingOps - Pilot reassignment not possible'" text="$body"/>
+							<show_notification text="'\033R' + 'TrainingOps - Pilot reassignment not possible'" timeout="10s"/>
+						</do_if>
+						<set_value name="$TrainingFee" exact="$Commander.controlled.subordinates.count * $Commander.$PilotThreshold * (500)Cr"/>
+						<do_if value="player.money ge $TrainingFee">
+							<debug_text text="'CARRIER BASED TRAINING (MD) - MONEY - Player is abe to afford the 30min interval %1 fee for training commander %2'.[$TrainingFee.formatted.{'%.s %Cr'},$Commander.knownname]"/>
+							<transfer_money from="faction.player" to="faction.civilian" amount="$TrainingFee"/>
+							<set_value name="$Commander.$TotalTrainingCost" exact="$Commander.$TotalTrainingCost + $TrainingFee"/>
+							<set_value name="$body" exact="'%1 credits have been deducted to fund the training of %2 pilots under the command of %3, aboard the training ship %4 (%5) in sector %6'.[$TrainingFee.formatted.{'%.s %Cr'}, $Commander.controlled.subordinates.count, $Commander.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.sector.knownname]"/>
+							<write_to_logbook category="upkeep" title="'TrainingOps - Training fees paid'" text="$body" interaction="showonmap" object="$Commander.$Carrier"/>
+							<!-- TODO: Tune Apply Experience - consider affecting base rate based on commander skills and some other variable -->
+							<do_for_each name="$Subordinate" in="$Commander.controlled.subordinates">
+								<set_value name="$XP_factor" exact="1.0"/>
+								<apply_experience entity="$Subordinate.pilot" experience="'pro_training_trainee'" factor="$XP_factor"/>
+								<apply_experience object="$Subordinate" role="entityrole.service" experience="'pro_training_trainee'" factor="$XP_factor"/>
+								<!-- Filter out application of XP + assignment to drones, laster towers, xsdrones-->
+								<do_if value="$Subordinate.pilot.skill.piloting ge $Commander.$PilotThreshold and $Subordinate.type != shiptype.lasertower and $Subordinate.type !=shiptype.smalldrone and $Subordinate.type != shiptype.xsdrone">
+									<do_if value="$Commander.$DutyStation.isoperational">
+										<debug_text text="'CARRIER BASED TRAINING (MD) - TRAINEE - Pilot %1 in ship %2 passed threshold %3 (Skill=%4).  Assigning to new commander %5'.[$Subordinate.pilot.knownname, $Subordinate.knownname, $Commander.$PilotThreshold, $Subordinate.pilot.skill.piloting, $Commander.$DutyStation.knownname]"/>
+										<apply_experience entity="$Commander" experience="'trained_pilot'" factor="$XP_factor"/>
+										<apply_experience object="$Commander.assignedcontrolled" role="entityrole.service" experience="'trained_pilot'" factor="$XP_factor"/>
+										<set_value name="$Commander.$PilotsTrained" exact="$Commander.$PilotsTrained + 1"/>
+										<debug_text text="'CARRIER BASED TRAINING (MD) - COMMANDER - Commander %1 on carrier %2 has graduated %3 pilots and run a total training cost of %4'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$PilotsTrained, $Commander.$TotalTrainingCost]"/>
+										<set_value name="$TraineePilotSkill" exact="$Subordinate.pilot.skill.piloting / 3"/>
+										<set_value name="$TraineeEngSkill" exact="$Subordinate.pilot.skill.engineering / 3"/>
+										<set_value name="$TraineeMoraleSkill" exact="$Subordinate.pilot.skill.morale / 3"/>
+										<set_value name="$body" exact="'The pilot %1 on ship %2 (%3) has graduated from training on the training carrier %4 (%5).  %1 is transferring to %6 to report for duty. The pilots training records show the following skills - Piloting=%7 Engineering=%8 Morale=%9'.[$Subordinate.pilot.knownname, $Subordinate.knownname, $Subordinate.idcode, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.$DutyStation.knownname, $TraineePilotSkill, $TraineeEngSkill, $TraineeMoraleSkill]"/>
+										<write_to_logbook category="upkeep" title="'\033G' + 'TrainingOps - Pilot Completed Training'" text="$body"/>
+										<create_order id="'AssignCommander'" object="$Subordinate" immediate="true">
+											<param name="commander" value="$Commander.$DutyStation"/>
+											<param name="assignment" value="assignment.defence"/>
+											<param name="cancelorders" value="true"/>
+										</create_order>
+									</do_if>
+								</do_if>
+								<do_else>
+									<debug_text text="'CARRIER BASED TRAINING (MD) - TRAINEE - No pilots eligible for promotion'"/>
+								</do_else>
+							</do_for_each>
+						</do_if>
+						<do_else>
+							<!-- TODO- something bad happens, player can't afford training fee.  No experience distributed to ships-->
+							<debug_text text="'CARRIER BASED TRAINING (MD) - MONEY - Player is unable to afford the %1 fee for %2.  No experience applied.'.[$TrainingFee.formatted.{'%.s %Cr'},$Commander.knownname]"/>
+							<set_value name="$body" exact="'You have insufficient funds to afford the %1 fee for training carrier %2 (%3).  Pilots will continue to be assigned to the carrier but will be unable to learn additional skills until this issue is resolved'.[$TrainingFee.formatted.{'%.s %Cr'}, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode]"/>
+							<write_to_logbook category="upkeep" title="'\033G' + 'TrainingOps - insufficient funds'" text="$body"/>
+							<show_notification text="'\033R' + 'TrainingOps - Insufficient Funds'" timeout="10s"/>
+						</do_else>
+					</do_elseif>
+					<!-- This is an unpaid commander, apply regular XP -->
+					<do_elseif value="$Commander.$ProTraining == 0 and $Commander.controlled.subordinates.count ge 1">
+						<do_if value="not($Commander.$DutyStation.isoperational)">
+							<!-- Duty station is no longer operational, inform the player - we have no place to send graduates to, but before we start looping through every pilot so as to not spam the log book-->
+							<set_value name="$body" exact="'The designated duty station (%1) for pilots assigned to train with %2 (%3) is no longer available.  Pilots will continue to train but will not be reassigned to a new commander until one is designated'.[$Commander.$DutyStation.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode]"/>
+							<write_to_logbook category="upkeep" title="'\033R' + 'TrainingOps - Pilot reassignment not possible'" text="$body"/>
+							<show_notification text="'\033R' + 'TrainingOps - Pilot reassignment not possible'" timeout="10s"/>
+						</do_if>
+						<do_for_each name="$Subordinate" in="$Commander.controlled.subordinates">
+							<set_value name="$XP_factor" exact="0.25"/>
+							<apply_experience entity="$Subordinate.pilot" experience="'basic_training_trainee'" factor="$XP_factor"/>
+							<apply_experience object="$Subordinate" role="entityrole.service" experience="'basic_training_trainee'" factor="$XP_factor"/>
+							<!-- Filter out application of XP + assignment to drones, laster towers, xsdrones-->
+							<do_if value="$Subordinate.pilot.skill.piloting ge $Commander.$PilotThreshold and $Subordinate.type != shiptype.lasertower and $Subordinate.type !=shiptype.smalldrone and $Subordinate.type != shiptype.xsdrone">
+								<do_if value="$Commander.$DutyStation.isoperational">
+									<debug_text text="'CARRIER BASED TRAINING (MD) - TRAINEE - Pilot %1 in ship %2 passed threshold %3 (Skill=%4).  Assigning to new commander %5'.[$Subordinate.pilot.knownname, $Subordinate.knownname, $Commander.$PilotThreshold, $Subordinate.pilot.skill.piloting, $Commander.$DutyStation.knownname]"/>
+									<apply_experience entity="$Commander" experience="'trained_pilot'" factor="$XP_factor"/>
+									<apply_experience object="$Commander.assignedcontrolled" role="entityrole.service" experience="'trained_pilot'" factor="$XP_factor"/>
+									<set_value name="$Commander.$PilotsTrained" exact="$Commander.$PilotsTrained + 1"/>
+									<debug_text text="'CARRIER BASED TRAINING (MD) - COMMANDER - Commander %1 on carrier %2 has graduated %3 pilots and run a total training cost of %4'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$PilotsTrained, $Commander.$TotalTrainingCost]"/>
+									<set_value name="$TraineePilotSkill" exact="$Subordinate.pilot.skill.piloting / 3"/>
+									<set_value name="$TraineeEngSkill" exact="$Subordinate.pilot.skill.engineering / 3"/>
+									<set_value name="$TraineeMoraleSkill" exact="$Subordinate.pilot.skill.morale / 3"/>
+									<set_value name="$body" exact="'The pilot %1 on ship %2 (%3) has graduated from training on the training carrier %4 (%5).  %1 is transferring to %6 to report for duty. The pilots training records show the following skills - Piloting=%7 Engineering=%8 Morale=%9'.[$Subordinate.pilot.knownname, $Subordinate.knownname, $Subordinate.idcode, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.$DutyStation.knownname, $TraineePilotSkill, $TraineeEngSkill, $TraineeMoraleSkill]"/>
+									<write_to_logbook category="upkeep" title="'\033G' + 'TrainingOps - Pilot Completed Training'" text="$body"/>
+									<create_order id="'AssignCommander'" object="$Subordinate" immediate="true">
+										<param name="commander" value="$Commander.$DutyStation"/>
+										<param name="assignment" value="assignment.defence"/>
+										<param name="cancelorders" value="true"/>
+									</create_order>
+								</do_if>
+							</do_if>
+							<do_else>
+								<debug_text text="'CARRIER BASED TRAINING (MD) - No pilots eligible for promotion'"/>
+							</do_else>
+						</do_for_each>
+					</do_elseif>
+					<do_else>
+						<debug_text text="'CARRIER BASED TRAINING (MD) - No assigned subordinates - Commander %1 assigned to carrier %2 (%3) in sector %4 has no subordinates assigned, skipping XP'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.sector.knownname]"/>
+					</do_else>
+				</do_for_each>
+			</actions>
+		</cue>
+		<!-- Issue hourly progress reports for commanders with the progress reports flag set to true-->
+		<cue name="Progress_Report" checkinterval="1h" instantiate="true">
+			<conditions>
+				<check_value value="global.$CBT_CmderGroup?"/>
+				<check_value value="global.$CBT_CmderGroup.count ge 1"/>
+			</conditions>
+			<actions>
+				<do_for_each name="$Commander" in="global.$CBT_CmderGroup">
+					<do_if value="$Commander.$ProgressReports == 1 and $Commander.$Carrier.isoperational and $Commander.$Carrier.defaultorder.id == 'CarrierBasedTraining' ">
+						<set_value name="$PilotStars" exact="$Commander.$PilotThreshold / 3"/>
+						<set_value name="$CommanderUpkeep" value="$Commander.$TotalTrainingCost + (0)Cr"/>
+						<set_value name="$body" exact="'Commander %1 aboard the training carrier %2 (%3) is currently located in sector %4. This commander is currently training %9 pilots to rank %5 in piloting and sending pilots for duty to %6. The commander wishes to inform you a total of %7 pilots have been trained, which cost a total of %8 in training fees'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.$Carrier.sector.knownname, $PilotStars, $Commander.$DutyStation.knownname, $Commander.$PilotsTrained, $CommanderUpkeep.formatted.{'%.s %Cr'}, $Commander.controlled.subordinates.count]"/>
+						<show_notification text="'\033G' + 'TrainingOps - Commander Report Available'" timeout="10s"/>
+						<write_to_logbook category="tips" title="'\033G' + 'TrainingOps - Commander Report Available'" text="$body" interaction="showonmap" object="$Commander.$Carrier"/>
+					</do_if>
+				</do_for_each>
+			</actions>
+		</cue>
+	</cues>
+</mdscript>
