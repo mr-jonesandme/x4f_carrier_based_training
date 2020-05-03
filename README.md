@@ -1,4 +1,4 @@
-# Carrier Based Training v0.0.1a
+# Carrier Based Training v0.0.2a
 
 Carrier Based Training is a mod for X4 which adds an automated subordinate training and reassignment system. A new default order is made available to L and XL ships with an average crew skill of 1 star, called "Train Subordinates".  Ships running this order will train their subordinates, increasing both the subordinate pilot's piloting, engineering, and morale skills, while also distributing some engineering/morale experience across the subordinate ship's service crew.  For each pilot that successfully graduates training, the training carrier commander may receive a minor bump in XP to the commander's piloting and management skills.  Subordinates that complete training will automagically reassign themselves to the player designated L/XL/Station.
 
@@ -58,6 +58,12 @@ The "Reassignment" system can be used to create a funnel of training systems, sh
 N/A
 
 ## Change Log
+
+### 0.0.2a
+- Added notification and logbook entry for inactive carrier (no pilots assigned/actively training)
+- Fixed the null value for total training costs in the commander progress report
+- Added chance values to XP events to make them a little more random
+- Adjusted XP experience caps for secondary skills and service crew
 
 ### 0.0.1a
 - Initial release

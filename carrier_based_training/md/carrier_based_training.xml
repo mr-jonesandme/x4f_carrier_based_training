@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<mdscript name="Carrier_based_training" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\Users\tmarr\source\repos\X4Scripts\md.xsd">
+<mdscript name="Carrier_based_training" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
 	<!-- This script handles state and experience events for trainees and commanders -->
 	<!-- Commander Blackboard Vars: $Carrier (ship), $DutyStation(ship/station), $ProTraining(1/0), $PilotThreshold(3*stars), $TrainingStarted(player.age), $PilotsTrained(0), $TotalTrainingCost(0), $ProgressReports(1/0) -->
 	<!-- Global Groups: global.$CBT_CmderGroup (entity)-->
