@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="carrier_based_training" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" version="001" date="2020-05-02" save="0">
+<content id="carrier_based_training" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" version="002" date="2020-05-02" save="0">
 	<text language="7" name="Carrier Based Training" description="None" author="mrjonesandme" />
 	<text language="33" name="Carrier Based Training" description="None" author="mrjonesandme" />
 	<text language="34" name="Carrier Based Training" description="Assign pilots to L class and XL class ships for training, automatically have them report to duty on completion of training"  author="mrjonesandme" />

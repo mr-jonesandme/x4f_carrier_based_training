@@ -6,12 +6,12 @@
 				<individual base="1.0" falloff="0.40" limit="15"/>
 			</skill>
 			<skill ref="engineering">
-				<individual base="1.0" falloff="0.20" limit="9"/>
-				<group base="1.0" falloff="0.30" limit="15"/>
+				<individual base="1.0" falloff="0.20" limit="6"/>
+				<group base="1.0" falloff="0.30" limit="9"/>
 			</skill>
 			<skill ref="morale">
-				<individual base="1.0" falloff="0.45" limit="15"/>
-				<group base="1.0" falloff="0.45" limit="15"/>
+				<individual base="1.0" falloff="0.45" limit="9"/>
+				<group base="1.0" falloff="0.45" limit="9"/>
 			</skill>
 		</experience>
 		<experience id="pro_training_trainee">
@@ -20,11 +20,11 @@
 			</skill>
 			<skill ref="engineering">
 				<individual base="1.0" falloff="0.40" limit="9"/>
-				<group base="1.0" falloff="0.90" limit="15"/>
+				<group base="1.0" falloff="0.90" limit="12"/>
 			</skill>
 			<skill ref="morale">
-				<individual base="1.0" falloff="0.90" limit="15"/>
-				<group base="1.0" falloff="0.90" limit="15"/>
+				<individual base="1.0" falloff="0.90" limit="12"/>
+				<group base="1.0" falloff="0.90" limit="12"/>
 			</skill>
 		</experience>
 		<experience id="trained_pilot">
@@ -32,10 +32,10 @@
 				<individual base="1.0" falloff="0.20" limit="15"/>
 			</skill>
 			<skill ref="management">
-				<individual base="1.0" falloff="0.43" limit="15"/>
+				<individual base="1.0" falloff="0.43" limit="12"/>
 			</skill>
 			<skill ref="engineering">
-				<group base="1.0" falloff="0.20" limit="15"/>
+				<group base="1.0" falloff="0.20" limit="12"/>
 			</skill>
 			<skill ref="morale">
 				<individual base="1.0" falloff="0.83" limit="15"/>

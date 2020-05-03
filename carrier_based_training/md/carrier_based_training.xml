@@ -70,14 +70,14 @@
 							<!-- TODO: Tune Apply Experience - consider affecting base rate based on commander skills and some other variable -->
 							<do_for_each name="$Subordinate" in="$Commander.controlled.subordinates">
 								<set_value name="$XP_factor" exact="1.0"/>
-								<apply_experience entity="$Subordinate.pilot" experience="'pro_training_trainee'" factor="$XP_factor"/>
-								<apply_experience object="$Subordinate" role="entityrole.service" experience="'pro_training_trainee'" factor="$XP_factor"/>
+								<apply_experience entity="$Subordinate.pilot" experience="'pro_training_trainee'" factor="$XP_factor" chance="60"/>
+								<apply_experience object="$Subordinate" role="entityrole.service" experience="'pro_training_trainee'" factor="$XP_factor" chance="40"/>
 								<!-- Filter out application of XP + assignment to drones, laster towers, xsdrones-->
 								<do_if value="$Subordinate.pilot.skill.piloting ge $Commander.$PilotThreshold and $Subordinate.type != shiptype.lasertower and $Subordinate.type !=shiptype.smalldrone and $Subordinate.type != shiptype.xsdrone">
 									<do_if value="$Commander.$DutyStation.isoperational">
 										<debug_text text="'CARRIER BASED TRAINING (MD) - TRAINEE - Pilot %1 in ship %2 passed threshold %3 (Skill=%4).  Assigning to new commander %5'.[$Subordinate.pilot.knownname, $Subordinate.knownname, $Commander.$PilotThreshold, $Subordinate.pilot.skill.piloting, $Commander.$DutyStation.knownname]"/>
-										<apply_experience entity="$Commander" experience="'trained_pilot'" factor="$XP_factor"/>
-										<apply_experience object="$Commander.assignedcontrolled" role="entityrole.service" experience="'trained_pilot'" factor="$XP_factor"/>
+										<apply_experience entity="$Commander" experience="'trained_pilot'" factor="$XP_factor" chance="15"/>
+										<apply_experience object="$Commander.assignedcontrolled" role="entityrole.service" experience="'trained_pilot'" factor="$XP_factor" chance="15"/>
 										<set_value name="$Commander.$PilotsTrained" exact="$Commander.$PilotsTrained + 1"/>
 										<debug_text text="'CARRIER BASED TRAINING (MD) - COMMANDER - Commander %1 on carrier %2 has graduated %3 pilots and run a total training cost of %4'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$PilotsTrained, $Commander.$TotalTrainingCost]"/>
 										<set_value name="$TraineePilotSkill" exact="$Subordinate.pilot.skill.piloting / 3"/>
@@ -115,14 +115,14 @@
 						</do_if>
 						<do_for_each name="$Subordinate" in="$Commander.controlled.subordinates">
 							<set_value name="$XP_factor" exact="0.25"/>
-							<apply_experience entity="$Subordinate.pilot" experience="'basic_training_trainee'" factor="$XP_factor"/>
+							<apply_experience entity="$Subordinate.pilot" experience="'basic_training_trainee'" factor="$XP_factor" chance="25"/>
 							<apply_experience object="$Subordinate" role="entityrole.service" experience="'basic_training_trainee'" factor="$XP_factor"/>
 							<!-- Filter out application of XP + assignment to drones, laster towers, xsdrones-->
 							<do_if value="$Subordinate.pilot.skill.piloting ge $Commander.$PilotThreshold and $Subordinate.type != shiptype.lasertower and $Subordinate.type !=shiptype.smalldrone and $Subordinate.type != shiptype.xsdrone">
 								<do_if value="$Commander.$DutyStation.isoperational">
 									<debug_text text="'CARRIER BASED TRAINING (MD) - TRAINEE - Pilot %1 in ship %2 passed threshold %3 (Skill=%4).  Assigning to new commander %5'.[$Subordinate.pilot.knownname, $Subordinate.knownname, $Commander.$PilotThreshold, $Subordinate.pilot.skill.piloting, $Commander.$DutyStation.knownname]"/>
-									<apply_experience entity="$Commander" experience="'trained_pilot'" factor="$XP_factor"/>
-									<apply_experience object="$Commander.assignedcontrolled" role="entityrole.service" experience="'trained_pilot'" factor="$XP_factor"/>
+									<apply_experience entity="$Commander" experience="'trained_pilot'" factor="$XP_factor" chance="5"/>
+									<apply_experience object="$Commander.assignedcontrolled" role="entityrole.service" experience="'trained_pilot'" factor="$XP_factor" chance="5"/>
 									<set_value name="$Commander.$PilotsTrained" exact="$Commander.$PilotsTrained + 1"/>
 									<debug_text text="'CARRIER BASED TRAINING (MD) - COMMANDER - Commander %1 on carrier %2 has graduated %3 pilots and run a total training cost of %4'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$PilotsTrained, $Commander.$TotalTrainingCost]"/>
 									<set_value name="$TraineePilotSkill" exact="$Subordinate.pilot.skill.piloting / 3"/>
@@ -143,7 +143,9 @@
 						</do_for_each>
 					</do_elseif>
 					<do_else>
-						<debug_text text="'CARRIER BASED TRAINING (MD) - No assigned subordinates - Commander %1 assigned to carrier %2 (%3) in sector %4 has no subordinates assigned, skipping XP'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.sector.knownname]"/>
+						<set_value name="$body" exact="'Commander %1 assigned to carrier %2 (%3) in sector %4 has no pilots assigned for training.  Training will continue once new pilots are assigned to the commander'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.sector.knownname]"/>
+						<write_to_logbook category="upkeep" title="'\033R' + 'TrainingOps - No pilots to train'" text="$body" interaction="showonmap" object="$Commander.$Carrier"/>
+						<show_notification text="'\033R' + 'TrainingOps - No Pilots to Train'" timeout="10s"/>
 					</do_else>
 				</do_for_each>
 			</actions>
@@ -158,8 +160,8 @@
 				<do_for_each name="$Commander" in="global.$CBT_CmderGroup">
 					<do_if value="$Commander.$ProgressReports == 1 and $Commander.$Carrier.isoperational and $Commander.$Carrier.defaultorder.id == 'CarrierBasedTraining' ">
 						<set_value name="$PilotStars" exact="$Commander.$PilotThreshold / 3"/>
-						<set_value name="$CommanderUpkeep" value="$Commander.$TotalTrainingCost + (0)Cr"/>
-						<set_value name="$body" exact="'Commander %1 aboard the training carrier %2 (%3) is currently located in sector %4. This commander is currently training %9 pilots to rank %5 in piloting and sending pilots for duty to %6. The commander wishes to inform you a total of %7 pilots have been trained, which cost a total of %8 in training fees'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.$Carrier.sector.knownname, $PilotStars, $Commander.$DutyStation.knownname, $Commander.$PilotsTrained, $CommanderUpkeep.formatted.{'%.s %Cr'}, $Commander.controlled.subordinates.count]"/>
+						<set_value name="$CommanderUpkeep" exact="$Commander.$TotalTrainingCost + (0)Cr"/>
+						<set_value name="$body" exact="'Commander %1 aboard the training carrier %2 (%3) is currently located in sector %4. This commander is currently training %9 pilots to rank %5 in piloting and sending pilots for duty to %6. The commander wishes to inform you a total of %7 pilots have completed training, which cost a total of %8 in operational costs'.[$Commander.knownname, $Commander.$Carrier.knownname, $Commander.$Carrier.idcode, $Commander.$Carrier.sector.knownname, $PilotStars, $Commander.$DutyStation.knownname, $Commander.$PilotsTrained, $CommanderUpkeep.formatted.{'%.s %Cr'}, $Commander.controlled.subordinates.count]"/>
 						<show_notification text="'\033G' + 'TrainingOps - Commander Report Available'" timeout="10s"/>
 						<write_to_logbook category="tips" title="'\033G' + 'TrainingOps - Commander Report Available'" text="$body" interaction="showonmap" object="$Commander.$Carrier"/>
 					</do_if>
