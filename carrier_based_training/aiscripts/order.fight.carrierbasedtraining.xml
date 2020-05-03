@@ -26,8 +26,9 @@
         <!-- Make sure commander has at least some talent for this order to be eligible.   -->
         <skill min="20"/>
         <requires>
-            <!-- L miners, freighters, destroyers, and carriers only -->
+            <!-- L miners, freighters, destroyers, supply ships, and carriers only -->
             <match_any>
+                <match shiptype="shiptype.resupplier"/>
                 <match shiptype="shiptype.largeminer"/>
                 <match shiptype="shiptype.freighter"/>
                 <match shiptype="shiptype.destroyer"/>
